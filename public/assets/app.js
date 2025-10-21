@@ -461,7 +461,7 @@
 
         submitBtn.disabled = true;
         try {
-          const res = await fetch('/api/wishes', {
+          const res = await fetch('http://207.180.239.207:3000/api/wishes', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -530,7 +530,7 @@
 
     async function load() {
       try {
-        const res = await fetch('/api/wishes');
+        const res = await fetch('http://207.180.239.207:3000/api/wishes');
         if (!res.ok) {
           throw new Error('Failed to load wishes');
         }
