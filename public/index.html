@@ -1,0 +1,544 @@
+<!--
+Project: Monty Birthday – Multilingual Site (HTML/JS + Node/Mongo)
+Author: Fady (٩٩٩)
+Notes: Copy the files below into a folder structure as shown.
+
+📁 monty-birthday/
+ ┣ 📁 public/
+ ┃ ┣ index.html
+ ┃ ┣ wishes.html
+ ┃ ┗ /assets/
+ ┃    ┣ styles.css
+ ┃    ┗ app.js
+ ┣ server.js
+ ┣ package.json
+ ┗ .env  (MONGO_URL=...  PORT=3000)
+-->
+
+<!-- ===================== public/index.html ===================== -->
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monty Birthday</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <!-- Language & Header -->
+  <nav class="navbar navbar-expand-lg bg-dark navbar-dark py-2">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#">🎉 Monty</a>
+      <div class="ms-auto d-flex align-items-center gap-2">
+        <select id="langSelect" class="form-select form-select-sm" style="width: 180px">
+          <option value="en" selected>English</option>
+          <option value="ar">العربية</option>
+          <option value="tr">Türkçe</option>
+          <option value="de">Deutsch</option>
+          <option value="es">Español</option>
+          <option value="it">Italiano</option>
+          <option value="fr">Français</option>
+        </select>
+        <a class="btn btn-outline-light btn-sm" href="/wishes.html" id="viewWishesBtn">View Wishes</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="py-5 text-center bg-gradient position-relative overflow-hidden">
+    <canvas id="confettiCanvas" class="position-absolute top-0 start-0 w-100 h-100 d-none"></canvas>
+    <div class="container position-relative">
+      <h1 class="display-5 fw-bold" id="title">Happy Birthday, Monty! 🎂</h1>
+      <p class="lead opacity-75" id="subtitle">Click the button to start the birthday magic.</p>
+      <button id="startBtn" class="btn btn-primary btn-lg mt-2">
+        <span id="startText">Start Birthday</span>
+      </button>
+    </div>
+
+    <!-- Festive lights -->
+    <ul class="lights" aria-hidden="true">
+      <li></li><li></li><li></li><li></li><li></li>
+      <li></li><li></li><li></li><li></li><li></li>
+    </ul>
+  </header>
+
+  <!-- Cake Section -->
+  <main class="container py-5">
+    <div class="text-center">
+      <div class="cake mx-auto" id="cake" aria-live="polite" aria-label="Birthday cake">
+        <div class="plate"></div>
+        <div class="layer layer-bottom"></div>
+        <div class="layer layer-middle"></div>
+        <div class="layer layer-top"></div>
+        <div class="icing">
+          <span class="cake-text" id="cakeText">happy brithday monty</span>
+        </div>
+        <div class="candles">
+          <div class="candle"><span class="flame"></span></div>
+          <div class="candle"><span class="flame"></span></div>
+          <div class="candle"><span class="flame"></span></div>
+        </div>
+      </div>
+
+      <button id="wishBtn" class="btn btn-outline-primary mt-4">wish a wish</button>
+      <div class="mt-4 small text-muted" id="serverLabel">server 193</div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-3 bg-light text-center small">
+    <div class="container">
+      <span id="footerText">تم التصميم بواسطة فادي (٩٩٩)</span>
+    </div>
+  </footer>
+
+  <!-- Wish Modal -->
+  <div class="modal fade" id="wishModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="wishTitle">Make a Wish</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="wishForm" class="row g-3">
+            <div class="col-12">
+              <label for="wisher" class="form-label" id="wisherLabel">Wisher</label>
+              <input type="text" class="form-control" id="wisher" required>
+            </div>
+            <div class="col-12">
+              <label for="wish" class="form-label" id="wishLabel">Wish</label>
+              <textarea class="form-control" id="wish" rows="3" required></textarea>
+            </div>
+            <div class="col-12 text-end">
+              <button type="submit" class="btn btn-primary" id="submitWish">Submit</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/app.js"></script>
+</body>
+</html>
+
+<!-- ===================== public/wishes.html ===================== -->
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wishes – Monty</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="/">🎉 Monty</a>
+      <select id="langSelect" class="form-select form-select-sm" style="width: 180px">
+        <option value="en" selected>English</option>
+        <option value="ar">العربية</option>
+        <option value="tr">Türkçe</option>
+        <option value="de">Deutsch</option>
+        <option value="es">Español</option>
+        <option value="it">Italiano</option>
+        <option value="fr">Français</option>
+      </select>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1 class="h4" id="wishesTitle">All Wishes</h1>
+      <a href="/" class="btn btn-outline-primary btn-sm" id="backHome">Back</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead>
+          <tr>
+            <th id="thNo">#</th>
+            <th id="thWisher">Wisher</th>
+            <th id="thWish">Wish</th>
+            <th id="thLang">Lang</th>
+            <th id="thDate">Date</th>
+          </tr>
+        </thead>
+        <tbody id="wishesBody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer class="py-3 bg-light text-center small">
+    <div class="container">
+      <span id="footerText">تم التصميم بواسطة فادي (٩٩٩)</span>
+    </div>
+  </footer>
+
+  <script src="/assets/app.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      window.MontyI18n && window.MontyI18n.applyLangToWishes();
+      fetch('/api/wishes').then(r=>r.json()).then(data => {
+        const tbody = document.getElementById('wishesBody');
+        tbody.innerHTML='';
+        data.wishes.forEach((w, i) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml(w.wisher||'')}</td><td>${escapeHtml(w.wish||'')}</td><td>${w.lang||''}</td><td>${new Date(w.createdAt).toLocaleString()}</td>`;
+          tbody.appendChild(tr);
+        });
+      }).catch(console.error);
+    });
+  </script>
+</body>
+</html>
+
+<!-- ===================== public/assets/styles.css ===================== -->
+/* Fonts */
+:root{--ff-ar:'Cairo',system-ui;--ff-en:'Poppins',system-ui}
+body{font-family:var(--ff-en)}
+html[dir="rtl"] body{font-family:var(--ff-ar)}
+
+/* Lights */
+.lights{position:absolute;bottom:-12px;left:0;right:0;display:flex;justify-content:center;gap:24px;list-style:none;padding:0;margin:0}
+.lights li{width:14px;height:14px;border-radius:50%;opacity:.8;animation:glow 1.5s infinite}
+.lights li:nth-child(odd){background:#ffdd57}
+.lights li:nth-child(even){background:#0dcaf0}
+@keyframes glow{0%{box-shadow:0 0 0 rgba(0,0,0,0)}50%{box-shadow:0 0 12px 6px rgba(255,255,255,.5)}100%{box-shadow:0 0 0 rgba(0,0,0,0)}}
+
+/* Cake */
+.cake{position:relative;width:280px;height:220px}
+.plate{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:320px;height:24px;background:#e9ecef;border-radius:12px}
+.layer{position:absolute;left:50%;transform:translateX(-50%);width:260px;background:#ffb3c1;border-radius:14px}
+.layer-bottom{height:70px;bottom:24px}
+.layer-middle{height:60px;bottom:84px;background:#ffc9de}
+.layer-top{height:50px;bottom:134px;background:#ffd9e8}
+.icing{position:absolute;bottom:150px;left:50%;transform:translateX(-50%);width:230px;height:46px;background:white;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.cake-text{font-weight:700;text-transform:lowercase}
+.candles{position:absolute;bottom:180px;left:50%;transform:translateX(-50%);display:flex;gap:18px}
+.candle{width:10px;height:38px;background:#fff;border-radius:4px;position:relative}
+.flame{position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:10px;height:14px;background:#ffc107;border-radius:50% 50% 50% 50%;box-shadow:0 0 12px 4px rgba(255,193,7,.7);animation:flicker .15s infinite alternate}
+@keyframes flicker{from{transform:translateX(-50%) scale(1)}to{transform:translateX(-50%) scale(1.1)}}
+
+/* Header gradient */
+header.bg-gradient{background:linear-gradient(135deg,#111 0%,#343a40 50%,#0d6efd 100%);color:#fff}
+
+/* Mobile tweaks */
+@media (max-width:576px){.cake{transform:scale(.9)}}
+
+/* Confetti canvas covers header */
+#confettiCanvas{pointer-events:none}
+
+/* Utilities */
+[dir="rtl"] .navbar .ms-auto{margin-left:0;margin-right:auto}
+
+/* Table */
+table td,table th{vertical-align:middle}
+
+/* Footer */
+footer{direction:ltr}
+
+/* ===================== public/assets/app.js ===================== */
+// Minimal XSS-safe escaping for rendering table rows
+function escapeHtml(str){return (str||'').toString().replace(/[&<>"']/g,s=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[s]))}
+
+// i18n dictionary
+window.MontyI18n = (function(){
+  const dict = {
+    title:{
+      en:"Happy Birthday, Monty! 🎂", ar:"عيد ميلاد سعيد يا مونتي! 🎂", tr:"Doğum günün kutlu olsun, Monty! 🎂",
+      de:"Alles Gute zum Geburtstag, Monty! 🎂", es:"¡Feliz cumpleaños, Monty! 🎂", it:"Buon compleanno, Monty! 🎂", fr:"Joyeux anniversaire, Monty ! 🎂"
+    },
+    subtitle:{
+      en:"Click the button to start the birthday magic.", ar:"اضغط الزر لبدء أجواء العيد.", tr:"Sihri başlatmak için düğmeye tıkla.",
+      de:"Klicke auf den Button für das Geburtstags‑Magie.", es:"Haz clic para comenzar la magia.", it:"Fai clic per iniziare la magia.", fr:"Clique pour lancer la magie."
+    },
+    start:{
+      en:"Start Birthday", ar:"ابدأ عيد الميلاد", tr:"Doğum Gününü Başlat", de:"Geburtstag starten",
+      es:"Empezar cumpleaños", it:"Avvia compleanno", fr:"Démarrer l'anniversaire"
+    },
+    viewWishesBtn:{
+      en:"View Wishes", ar:"عرض الأماني", tr:"Dilekleri Gör", de:"Wünsche ansehen",
+      es:"Ver deseos", it:"Vedi desideri", fr:"Voir les vœux"
+    },
+    wishBtn:{
+      en:"wish a wish", ar:"تمني أمنية", tr:"Dilek tut", de:"Wünsch dir was",
+      es:"pide un deseo", it:"esprimi un desiderio", fr:"fais un vœu"
+    },
+    serverLabel:{
+      en:"server 193", ar:"server 193", tr:"server 193", de:"server 193", es:"server 193", it:"server 193", fr:"server 193"
+    },
+    footerText:{
+      en:"تم التصميم بواسطة فادي (٩٩٩)", ar:"تم التصميم بواسطة فادي (٩٩٩)", tr:"Tasarımdan sorumlu: Fady (٩٩٩)",
+      de:"Design von Fady (٩٩٩)", es:"Diseñado por Fady (٩٩٩)", it:"Design di Fady (٩٩٩)", fr:"Design par Fady (٩٩٩)"
+    },
+    modalTitle:{
+      en:"Make a Wish", ar:"اكتب أمنيتك", tr:"Dileğini Yaz", de:"Wunsch erstellen",
+      es:"Pide tu deseo", it:"Esprimi un desiderio", fr:"Fais un vœu"
+    },
+    wisherLabel:{
+      en:"Wisher", ar:"المتمني", tr:"Dileyen", de:"Wünschender", es:"Quien desea", it:"Chi", fr:"Souhaitant"
+    },
+    wishLabel:{
+      en:"Wish", ar:"الأمنية", tr:"Dilek", de:"Wunsch", es:"Deseo", it:"Desiderio", fr:"Souhait"
+    },
+    submit:{
+      en:"Submit", ar:"إرسال", tr:"Gönder", de:"Senden", es:"Enviar", it:"Invia", fr:"Envoyer"
+    },
+    wishesTitle:{
+      en:"All Wishes", ar:"كل الأماني", tr:"Tüm Dilekler", de:"Alle Wünsche", es:"Todos los deseos", it:"Tutti i desideri", fr:"Tous les vœux"
+    },
+    backHome:{
+      en:"Back", ar:"رجوع", tr:"Geri", de:"Zurück", es:"Atrás", it:"Indietro", fr:"Retour"
+    },
+    thNo:{en:"#", ar:"#", tr:"#", de:"#", es:"#", it:"#", fr:"#"},
+    thWisher:{
+      en:"Wisher", ar:"المتمني", tr:"Dileyen", de:"Wünschender", es:"Quien desea", it:"Chi", fr:"Souhaitant"
+    },
+    thWish:{
+      en:"Wish", ar:"الأمنية", tr:"Dilek", de:"Wunsch", es:"Deseo", it:"Desiderio", fr:"Souhait"
+    },
+    thLang:{
+      en:"Lang", ar:"اللغة", tr:"Dil", de:"Sprache", es:"Idioma", it:"Lingua", fr:"Langue"
+    },
+    thDate:{
+      en:"Date", ar:"التاريخ", tr:"Tarih", de:"Datum", es:"Fecha", it:"Data", fr:"Date"
+    }
+  };
+
+  const els = {
+    title:()=>document.getElementById('title'),
+    subtitle:()=>document.getElementById('subtitle'),
+    startText:()=>document.getElementById('startText'),
+    viewWishesBtn:()=>document.getElementById('viewWishesBtn'),
+    wishBtn:()=>document.getElementById('wishBtn'),
+    serverLabel:()=>document.getElementById('serverLabel'),
+    footerText:()=>document.getElementById('footerText'),
+    wishTitle:()=>document.getElementById('wishTitle'),
+    wisherLabel:()=>document.getElementById('wisherLabel'),
+    wishLabel:()=>document.getElementById('wishLabel'),
+    submitWish:()=>document.getElementById('submitWish'),
+    wishesTitle:()=>document.getElementById('wishesTitle'),
+    backHome:()=>document.getElementById('backHome'),
+    thNo:()=>document.getElementById('thNo'),
+    thWisher:()=>document.getElementById('thWisher'),
+    thWish:()=>document.getElementById('thWish'),
+    thLang:()=>document.getElementById('thLang'),
+    thDate:()=>document.getElementById('thDate'),
+    langSelect:()=>document.getElementById('langSelect'),
+  };
+
+  function setDir(lang){
+    const rtl = lang==='ar';
+    document.documentElement.setAttribute('dir', rtl?'rtl':'ltr');
+    document.documentElement.setAttribute('lang', lang);
+  }
+
+  function apply(lang){
+    setDir(lang);
+    const map = {
+      title:'title', subtitle:'subtitle', startText:'start', viewWishesBtn:'viewWishesBtn',
+      wishBtn:'wishBtn', serverLabel:'serverLabel', footerText:'footerText', wishTitle:'modalTitle',
+      wisherLabel:'wisherLabel', wishLabel:'wishLabel', submitWish:'submit', wishesTitle:'wishesTitle',
+      backHome:'backHome', thNo:'thNo', thWisher:'thWisher', thWish:'thWish', thLang:'thLang', thDate:'thDate'
+    };
+    for(const id in map){
+      const el = els[id] && els[id]();
+      if(el && dict[map[id]] && dict[map[id]][lang]) el.textContent = dict[map[id]][lang];
+    }
+  }
+
+  function initSelect(){
+    const sel = els.langSelect();
+    if(!sel) return;
+    const saved = localStorage.getItem('monty.lang') || 'en';
+    sel.value = saved; apply(saved);
+    sel.addEventListener('change', ()=>{
+      const lang = sel.value; localStorage.setItem('monty.lang', lang); apply(lang);
+    });
+  }
+
+  function applyLangToWishes(){
+    const sel = document.getElementById('langSelect');
+    if(!sel) return;
+    const lang = localStorage.getItem('monty.lang')||'en';
+    sel.value=lang; apply(lang);
+    sel.addEventListener('change', ()=>{const v=sel.value; localStorage.setItem('monty.lang',v); apply(v);});
+  }
+
+  return {initSelect, applyLangToWishes};
+})();
+
+// Confetti + interactions
+(function(){
+  const startBtn = document.getElementById('startBtn');
+  const canvas = document.getElementById('confettiCanvas');
+  const ctx = canvas ? canvas.getContext('2d') : null;
+  const cake = document.getElementById('cake');
+  const wishBtn = document.getElementById('wishBtn');
+  let confetti = [], running=false;
+
+  function resize(){ if(!canvas) return; canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; }
+  window.addEventListener('resize', resize);
+
+  function launch(){
+    if(!canvas || !ctx) return;
+    canvas.classList.remove('d-none');
+    resize();
+    running=true; confetti = Array.from({length:180},()=>({
+      x: Math.random()*canvas.width,
+      y: -10- Math.random()*canvas.height,
+      r: 4+Math.random()*6,
+      vy: 2+Math.random()*3,
+      vx: -1+Math.random()*2,
+      rot: Math.random()*Math.PI,
+      vr: -0.05+Math.random()*0.1
+    }));
+    requestAnimationFrame(tick);
+  }
+
+  function tick(){
+    if(!running||!ctx||!canvas) return; 
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    confetti.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+      if(p.y>canvas.height+20){p.y=-10; p.x=Math.random()*canvas.width}
+      ctx.save();
+      ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r);
+      ctx.restore();
+    });
+    requestAnimationFrame(tick);
+  }
+
+  if(startBtn){
+    startBtn.addEventListener('click', ()=>{
+      launch();
+      cake && cake.classList.add('animate');
+    });
+  }
+
+  if(wishBtn){
+    const modalEl = document.getElementById('wishModal');
+    const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+    wishBtn.addEventListener('click', ()=> modal && modal.show());
+  }
+
+  // i18n init
+  window.MontyI18n && window.MontyI18n.initSelect();
+
+  // Submit wish
+  const form = document.getElementById('wishForm');
+  if(form){
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const btn = document.getElementById('submitWish');
+      btn.disabled=true;
+      const payload = {
+        wisher: document.getElementById('wisher').value.trim(),
+        wish: document.getElementById('wish').value.trim(),
+        lang: localStorage.getItem('monty.lang')||'en'
+      };
+      try{
+        const res = await fetch('/api/wishes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        if(!res.ok) throw new Error('Failed');
+        document.getElementById('wisher').value='';
+        document.getElementById('wish').value='';
+        bootstrap.Modal.getInstance(document.getElementById('wishModal')).hide();
+        alert('✨ Wish saved!');
+      }catch(err){
+        console.error(err); alert('Error saving wish.');
+      }finally{btn.disabled=false;}
+    });
+  }
+})();
+
+/* ===================== server.js ===================== */
+// Node.js + Express + MongoDB (Mongoose)
+// Usage: npm i && npm start (after setting MONGO_URL in .env)
+const express = require('express');
+const path = require('path');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const helmet = require('helmet');
+const xss = require('xss');
+require('dotenv').config();
+
+const app = express();
+app.use(helmet({crossOriginResourcePolicy:false}));
+app.use(cors());
+app.use(express.json({limit:'200kb'}));
+app.use(express.static(path.join(__dirname,'public')));
+
+// Mongo
+const MONGO_URL = process.env.MONGO_URL || 'mongodb://127.0.0.1:27017/monty_birthday';
+mongoose.set('strictQuery', true);
+mongoose.connect(MONGO_URL).then(()=>console.log('Mongo connected')).catch(console.error);
+
+const wishSchema = new mongoose.Schema({
+  wisher: {type:String, trim:true},
+  wish: {type:String, trim:true},
+  lang: {type:String, trim:true, default:'en'},
+  ip: String
+},{timestamps:true});
+const Wish = mongoose.model('Wish', wishSchema);
+
+// Routes
+app.get('/api/health', (req,res)=>res.json({ok:true}));
+
+app.post('/api/wishes', async (req,res)=>{
+  try{
+    const {wisher, wish, lang} = req.body||{};
+    if(!wish || !wisher) return res.status(400).json({error:'Missing fields'});
+    const safeWisher = xss(String(wisher)).slice(0,100);
+    const safeWish = xss(String(wish)).slice(0,1000);
+    const safeLang = String(lang||'en').slice(0,5);
+    const doc = await Wish.create({wisher:safeWisher, wish:safeWish, lang:safeLang, ip:req.ip});
+    res.json({ok:true, id:doc._id});
+  }catch(e){
+    console.error(e); res.status(500).json({error:'Server error'});
+  }
+});
+
+app.get('/api/wishes', async (req,res)=>{
+  const items = await Wish.find().sort({createdAt:-1}).limit(1000).lean();
+  res.json({wishes: items});
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, ()=> console.log(`Server on http://localhost:${PORT}`));
+
+/* ===================== package.json ===================== */
+{
+  "name":"monty-birthday",
+  "version":"1.0.0",
+  "private":true,
+  "type":"commonjs",
+  "scripts":{
+    "start":"node server.js",
+    "dev":"nodemon server.js"
+  },
+  "dependencies":{
+    "cors":"^2.8.5",
+    "dotenv":"^16.4.5",
+    "express":"^4.19.2",
+    "helmet":"^7.1.0",
+    "mongoose":"^8.6.0",
+    "xss":"^1.0.14"
+  },
+  "devDependencies":{
+    "nodemon":"^3.1.0"
+  }
+}
+
+/* ===================== .env (example) ===================== */
+# MONGO_URL=mongodb://127.0.0.1:27017/monty_birthday
+# PORT=3000
+
